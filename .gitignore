@@ -9,3 +9,6 @@
 # No one should see my .Rhistory
 
 .Rhistory
+
+# No one should see my rsconnect
+rsconnect/

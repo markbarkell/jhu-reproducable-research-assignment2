@@ -153,3 +153,7 @@ barplot(
 ```{r sessionInfoInvocation}
 sessionInfo()
 ```
+
+## Where Mark Barkell has published
+
+[Location of publication on Rpub.com](http://rpubs.com/userbarkellmark/280434)
