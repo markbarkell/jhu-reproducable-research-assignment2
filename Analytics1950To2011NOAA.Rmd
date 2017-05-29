@@ -1,0 +1,155 @@
+---
+title: "Analytics 1950 To 2011 NOAA"
+author: "Mark Barkell"
+date: "May 21, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Synopsis
+
+Weather Events has been recorded sproatically by the National Oceanic & Atmospheric Administration from 1950 to 2011.  Such events cause economic losses as well as unfortunant human deaths.   By compiling this data using the R Programming Language charts are produced showing which types of events seem to cause either the greatest levels of economic loss or deaths.
+
+The **Results** Section contains plots showing which three types of events cause the most loss of human life. That section also indicates which events cause the greatest economic consequences.
+
+The **Data Processing** Section explains the R Language Calculations used to make the plots.
+
+Tornados are the weather events having both the greatest death tolls and economic consequences.
+
+# Data Processing
+
+In processing data the code is seperated into multiple sections.   The sections are ordered by the imperitive operational ordering needs to produce the **Results** section.
+
+## Obtaining and loading the data.
+
+The following code snippet downloads, if need be, the data file.   It then loads the data into the computer's RAM.
+
+```{r download}
+noaa1950to2011DataUrl <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2"
+zipFileName = "reportDataStormData.csv.bz2"
+if (!file.exists(zipFileName)) {
+  download.file(noaa1950to2011DataUrl, destfile = zipFileName )
+}
+rawData <- read.csv(zipFileName)
+
+```
+
+```{r}
+# Loading this library give output not needed for the report.
+# But, because it gives an informational message to a user of the R Programming Language
+# it is put it its own code section to attempt to confuse the reader less.
+library(dplyr)
+```
+
+## Data Processing Code For Calculating Human Death Toll
+
+The following code creates the sum of deaths for each event type.   Then, after sorting, selects the top few death causing events.   The calculations that are done here are used to show result graphs.
+
+
+```{r sumDeathsByEventTypeAndStoreTopX}
+
+# This install would need to be run if the system did not yet have installed the package.
+#install.packages("dplyr")
+
+library(dplyr)
+
+meaningfulEventIndexes <- which(!is.na(rawData$FATALITIES) & !is.na(rawData$EVTYPE))
+
+deathInfo <- rawData[meaningfulEventIndexes, c("FATALITIES", "EVTYPE")] %>% group_by(EVTYPE) %>% summarise_each(funs(sum))
+
+nonZeroDeathInfo <- deathInfo[deathInfo$FATALITIES > 0,]
+
+topXNonZeroDeathInfo <- nonZeroDeathInfo[order(nonZeroDeathInfo$FATALITIES, decreasing=TRUE ),]
+
+topXNonZeroDeathInfo <- topXNonZeroDeathInfo[1:3,]
+
+topXNonZeroDeathInfo$EVTYPE <- as.factor(as.character(topXNonZeroDeathInfo$EVTYPE))
+
+countXOfEventTypes <- dim(topXNonZeroDeathInfo)[1]
+```
+
+
+## Data Processing Code For Calculating Economic Loss
+
+The following code sums the property damage for each event type.  Then, after sorting, selects the top few most expensive types of events.   The calculations that are done here are used to show result graphs.
+
+```{r sumPropertyDamageByEventTypeStoreTopX}
+
+library(dplyr)
+
+rawData[is.na(rawData$PROPDMG)]$PROPDMG <- 0.0
+rawData[is.na(rawData$CROPDMG)]$CROPDMG <- 0.0
+
+# Property Damage and Crop Damage
+rawData$DMG <- rawData$PROPDMG + rawData$CROPDMG
+
+propInfo <- rawData[, c("DMG", "EVTYPE")] %>% group_by(EVTYPE) %>% summarise_each(funs(sum))
+
+nonZeroPropInfo <- propInfo[propInfo$DMG > 0,]
+
+topXNonZeroPropInfo <- nonZeroPropInfo[order(nonZeroPropInfo$DMG, decreasing=TRUE ),]
+
+topXNonZeroPropInfo <- topXNonZeroPropInfo[1:3,]
+
+topXNonZeroPropInfo$EVTYPE <- as.factor(as.character(topXNonZeroPropInfo$EVTYPE))
+
+countPropXOfEventTypes <- dim(topXNonZeroPropInfo)[1]
+```
+
+# Results
+
+As various whether events occur there can be events that cause human death and events which cause economic distruction.  The NOAA data outlines for the recorded events information pertaining to this.
+
+## Human Death Toll Events
+
+The following figure may be used to understand the human death toll of various weather events. It shows that the death toll is highest for the `r as.character(topXNonZeroDeathInfo[1, "EVTYPE"])`:
+
+```{r deathTollByType}
+
+
+barplot(
+  topXNonZeroDeathInfo$FATALITIES,
+  names=topXNonZeroDeathInfo$EVTYPE,
+  xlab="Weather Event Type", 
+  ylab="Human Death Count", 
+  main= paste(paste("Top ", as.character(countXOfEventTypes)), "Death Event Types from 1950-11 Reported for the USA.")
+  , col=c("darkred", "navy", "tan")
+  )
+
+
+```
+
+
+## Economic Consequences
+
+The following figure may be used to understand the economic consequences of various weather events.  It shows that the most expensive reported whether event is `r as.character(topXNonZeroPropInfo[1, "EVTYPE"])`:
+
+```{r expenseToolByType}
+
+barplot(
+  topXNonZeroPropInfo$DMG,
+  names=topXNonZeroPropInfo$EVTYPE,
+  xlab="Weather Event Type", 
+  ylab="Property And Crop Damage", 
+  main= paste(paste("Top ", as.character(countPropXOfEventTypes)), "Damage Event Types from 1950-11 Reported for the USA.")
+  , col=c("darkred", "navy", "tan")
+  )
+
+
+```
+
+
+# References
+
+
+1. [Assignment Web Page: Course Project 2](https://www.coursera.org/learn/reproducible-research/peer/OMZ37/course-project-2)
+2. [Stackoverflow: The way to read a bz2 file holding a csv file in R](http://stackoverflow.com/questions/25948777/extract-bz2-file-in-r)
+
+
+## Invocation of the sessionInfo() function:
+```{r sessionInfoInvocation}
+sessionInfo()
+```

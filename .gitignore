@@ -1,0 +1,11 @@
+
+# Let me not commit the large data file to the git repository.
+*.bz2
+
+# Let me not commit the output files.
+*.pdf
+*.html
+
+# No one should see my .Rhistory
+
+.Rhistory
